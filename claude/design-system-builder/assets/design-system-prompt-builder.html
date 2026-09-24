@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Design System Prompt Builder</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f7f7f6;
+    --surface: #ffffff;
+    --border: #e5e5e5;
+    --border-input: #ddd;
+    --text: #1a1a1a;
+    --text-secondary: #444;
+    --text-muted: #666;
+    --text-label: #999;
+    --input-bg: #fafafa;
+    --input-focus-bg: #fff;
+    --input-focus-border: #aaa;
+    --tag-bg: #f0f0ee;
+    --preview-bg: #f7f7f6;
+    --btn-bg: #1a1a1a;
+    --btn-hover: #333;
+    --add-btn-border: #ccc;
+    --font-preview-border: #e5e5e5;
+    --font-preview-body-bg: #fafafa;
+  }
+
+  [data-theme="dark"] {
+    --bg: #111110;
+    --surface: #1c1c1b;
+    --border: #2e2e2c;
+    --border-input: #333331;
+    --text: #f0ede8;
+    --text-secondary: #b0aca5;
+    --text-muted: #777570;
+    --text-label: #555350;
+    --input-bg: #161615;
+    --input-focus-bg: #1f1f1d;
+    --input-focus-border: #555;
+    --tag-bg: #252523;
+    --preview-bg: #161615;
+    --btn-bg: #f0ede8;
+    --btn-hover: #d4d0ca;
+    --add-btn-border: #333;
+    --font-preview-border: #2e2e2c;
+    --font-preview-body-bg: #161615;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 32px 16px 64px;
+    transition: background 0.2s, color 0.2s;
+  }
+
+  .container { max-width: 680px; margin: 0 auto; }
+
+  .header-row {
+    display: flex; align-items: flex-start;
+    justify-content: space-between; margin-bottom: 32px;
+  }
+  h1 { font-size: 1.25rem; font-weight: 600; letter-spacing: -0.01em; margin-bottom: 4px; }
+  .subtitle { font-size: 0.85rem; color: var(--text-muted); }
+  .header-btns { display: flex; gap: 8px; align-items: center; }
+
+  .theme-toggle {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 6px 12px; font-size: 0.8rem;
+    font-family: inherit; color: var(--text-secondary); cursor: pointer;
+    display: flex; align-items: center; gap: 6px;
+    transition: background 0.15s, border-color 0.15s;
+    white-space: nowrap; flex-shrink: 0;
+  }
+  .theme-toggle:hover { border-color: var(--input-focus-border); }
+
+  .section {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 20px; margin-bottom: 12px;
+    transition: background 0.2s, border-color 0.2s;
+  }
+  .section-title {
+    font-size: 0.7rem; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--text-label); margin-bottom: 14px;
+  }
+
+  label {
+    display: block; font-size: 0.8rem; font-weight: 500;
+    color: var(--text-secondary); margin-bottom: 5px; margin-top: 12px;
+  }
+  label:first-of-type { margin-top: 0; }
+
+  input[type="text"], textarea, select {
+    width: 100%; padding: 8px 11px;
+    border: 1px solid var(--border-input); border-radius: 7px;
+    font-size: 0.85rem; font-family: inherit;
+    color: var(--text); background: var(--input-bg);
+    transition: border-color 0.15s, background 0.15s; resize: vertical;
+  }
+  select {
+    appearance: none; -webkit-appearance: none;
+    background-repeat: no-repeat; background-position: right 11px center;
+    padding-right: 32px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  }
+  [data-theme="dark"] select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23aaa' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  }
+  input:focus, textarea:focus, select:focus {
+    outline: none; border-color: var(--input-focus-border); background: var(--input-focus-bg);
+  }
+  textarea { min-height: 72px; }
+
+  .colour-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .colour-row input[type="text"] { flex: 1; }
+  .swatch { width: 32px; height: 32px; border-radius: 6px; border: 1px solid var(--border-input); flex-shrink: 0; cursor: pointer; }
+  .remove-btn { background: none; border: none; cursor: pointer; color: var(--text-label); font-size: 1rem; padding: 0 4px; transition: color 0.15s; }
+  .remove-btn:hover { color: #e55; }
+  .add-btn {
+    font-size: 0.78rem; color: var(--text-muted); background: none;
+    border: 1px dashed var(--add-btn-border); border-radius: 6px;
+    padding: 6px 12px; cursor: pointer; width: 100%;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .add-btn:hover { border-color: var(--input-focus-border); color: var(--text); }
+
+  .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  .tag {
+    display: flex; align-items: center; gap: 5px;
+    background: var(--tag-bg); border-radius: 20px;
+    padding: 4px 10px; font-size: 0.78rem; color: var(--text);
+  }
+  .tag button { background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: 0.85rem; line-height: 1; }
+  .tag button:hover { color: #e55; }
+  .constraint-input-row { display: flex; gap: 8px; margin-top: 8px; }
+  .constraint-input-row input { flex: 1; }
+  .constraint-input-row button {
+    background: var(--btn-bg); color: var(--bg); border: none;
+    border-radius: 7px; padding: 8px 14px; font-size: 0.82rem;
+    cursor: pointer; white-space: nowrap; transition: background 0.15s;
+  }
+  .constraint-input-row button:hover { background: var(--btn-hover); }
+
+  .preview-box {
+    background: var(--preview-bg); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px; font-size: 0.78rem;
+    font-family: "SF Mono","Fira Code",monospace; white-space: pre-wrap;
+    word-break: break-word; color: var(--text-secondary);
+    line-height: 1.6; max-height: 360px; overflow-y: auto;
+  }
+
+  .copy-btn {
+    width: 100%; background: var(--btn-bg); color: var(--bg);
+    border: none; border-radius: 8px; padding: 12px;
+    font-size: 0.88rem; font-weight: 500; cursor: pointer;
+    margin-top: 10px; transition: background 0.15s;
+  }
+  .copy-btn:hover { background: var(--btn-hover); }
+  .copy-btn.copied { background: #2d8a4e; color: #fff; }
+
+  .generate-btn {
+    width: 100%; background: #2d8a4e; color: #fff;
+    border: none; border-radius: 8px; padding: 13px;
+    font-size: 0.92rem; font-weight: 600; cursor: pointer;
+    margin-top: 8px; transition: background 0.15s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .generate-btn:hover { background: #236e3e; }
+  .generate-btn:disabled { background: #999; cursor: not-allowed; opacity: 0.6; }
+
+  #copyMsg {
+    font-size: 0.78rem; margin-top: 8px; text-align: center;
+    min-height: 1.2em; opacity: 0; transition: opacity 0.3s;
+  }
+  #copyMsg.visible { opacity: 1; }
+
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  .toast {
+    position: fixed; bottom: 32px; left: 50%;
+    transform: translateX(-50%) translateY(16px);
+    background: #1a1a1a; color: #fff;
+    padding: 10px 20px; border-radius: 8px; font-size: 0.82rem;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.2s, transform 0.2s;
+    z-index: 999; white-space: nowrap;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  [data-theme="dark"] .toast { background: #f0ede8; color: #111110; }
+</style>
+</head>
+<body>
+<div class="toast" id="toast">✓ Prompt copied to clipboard</div>
+<div class="container">
+  <div class="header-row">
+    <div>
+      <h1>Design System Prompt Builder</h1>
+      <p class="subtitle">Fill in the fields — your prompt updates live below.</p>
+    </div>
+    <div class="header-btns">
+      <button class="theme-toggle" id="randomiseBtn">✦ Randomise</button>
+      <button class="theme-toggle" id="themeBtn">🌙 Dark</button>
+    </div>
+  </div>
+
+  <!-- Brand -->
+  <div class="section">
+    <div class="section-title">Brand</div>
+    <label>Project name</label>
+    <input type="text" id="brandName" placeholder="e.g. StickerFlesh">
+    <label>About the project</label>
+    <textarea id="aboutProject" placeholder="e.g. An online shop selling original hand-drawn stickers for pop culture fans and collectors"></textarea>
+    <label>Audience</label>
+    <textarea id="audience" placeholder="e.g. Gen Z sticker collectors, indie artists, people who love dark humour and expressive merch"></textarea>
+    <label>Brand personality</label>
+    <textarea id="personality" placeholder="e.g. Playful but a bit edgy, bold and irreverent, not corporate — like a zine that sells out"></textarea>
+  </div>
+
+  <!-- Colours -->
+  <div class="section">
+    <div class="section-title">Brand Colours</div>
+    <label>Start from a brand palette</label>
+    <select id="brandPreset">
+      <option value="">Select a preset (optional)</option>
+      <optgroup label="Tech">
+        <option value="#1DA1F2">Twitter / X — Blue</option>
+        <option value="#1877F2,#42B72A">Facebook — Blue + Green</option>
+        <option value="#E1306C,#F77737,#FCAF45,#833AB4">Instagram — Gradient</option>
+        <option value="#FF0000,#282828">YouTube — Red + Dark</option>
+        <option value="#0A66C2,#313335">LinkedIn — Blue + Charcoal</option>
+        <option value="#25D366,#128C7E,#075E54">WhatsApp — Greens</option>
+        <option value="#7289DA,#99AAB5,#2C2F33">Discord — Purple + Grey</option>
+        <option value="#FF4500,#FF6534">Reddit — Oranges</option>
+        <option value="#1DB954,#191414">Spotify — Green + Black</option>
+        <option value="#0061FF,#003DCB">Dropbox — Blues</option>
+        <option value="#EA4335,#4285F4,#FBBC05,#34A853">Google — Primary four</option>
+        <option value="#FF9900,#232F3E">Amazon — Orange + Dark</option>
+        <option value="#F25022,#7FBA00,#00A4EF,#FFB900">Microsoft — Four colours</option>
+        <option value="#A2AAAD,#000000">Apple — Silver + Black</option>
+      </optgroup>
+      <optgroup label="Creative & Design">
+        <option value="#F24E1E,#FF7262,#1ABCFE,#0ACF83">Figma — Four colours</option>
+        <option value="#FF3621,#1868DB">Behance — Red + Blue</option>
+        <option value="#00B37D,#003D1F">Framer — Greens</option>
+      </optgroup>
+      <optgroup label="Retail & Consumer">
+        <option value="#E50914,#141414">Netflix — Red + Black</option>
+        <option value="#00B2FF,#004B87">PayPal — Blues</option>
+        <option value="#7B5EA7,#4A154B">Slack — Purple</option>
+        <option value="#DA291C,#27251F">McDonald's — Red + Black</option>
+        <option value="#006241,#CBA258">Starbucks — Green + Gold</option>
+        <option value="#EE2722,#FFFFFF">Pinterest — Red + White</option>
+      </optgroup>
+    </select>
+    <div id="colourList" style="margin-top:12px"></div>
+    <button class="add-btn" id="addColourBtn">+ Add colour</button>
+  </div>
+
+  <!-- Typography -->
+  <div class="section">
+    <div class="section-title">Typography</div>
+    <div class="row2">
+      <div>
+        <label>Heading font</label>
+        <select id="fontHeading"><option value="">Loading…</option></select>
+      </div>
+      <div>
+        <label>Body font</label>
+        <select id="fontBody"><option value="">Loading…</option></select>
+      </div>
+    </div>
+    <label style="margin-top:10px">Sample text</label>
+    <input type="text" id="sampleText" placeholder="Type something">
+    <div id="fontPreview" style="margin-top:14px; border:1px solid var(--font-preview-border); border-radius:8px; overflow:hidden; transition:opacity 0.2s;">
+      <div style="padding:16px 18px 10px; border-bottom:1px solid var(--border);">
+        <div style="font-size:0.65rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-label);margin-bottom:8px;">Heading</div>
+        <div id="previewHeadingText" style="font-size:1.6rem;line-height:1.2;color:var(--text);">The quick brown fox</div>
+      </div>
+      <div style="padding:10px 18px 16px;background:var(--font-preview-body-bg);">
+        <div style="font-size:0.65rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-label);margin-bottom:8px;">Body</div>
+        <div id="previewBodyText" style="font-size:0.9rem;line-height:1.6;color:var(--text-secondary);">Stickers that slap. Designs that stick with you long after the packaging's gone.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Design constraints -->
+  <div class="section">
+    <div class="section-title">Design Constraints</div>
+    <label>Colour mode</label>
+    <select id="colorMode">
+      <option value="Light mode default, dark mode via data-theme">Light default + dark mode</option>
+      <option value="Dark mode default, light mode via data-theme">Dark default + light mode</option>
+      <option value="Light mode only">Light only</option>
+      <option value="Dark mode only">Dark only</option>
+    </select>
+    <label>Additional constraints</label>
+    <div class="tags" id="constraintTags"></div>
+    <div class="constraint-input-row">
+      <input type="text" id="constraintInput" placeholder="e.g. always use 1px borders at 0.12 opacity">
+      <button id="addConstraintBtn">Add</button>
+    </div>
+  </div>
+
+  <!-- Preview -->
+  <div class="section">
+    <div class="section-title">Generated Prompt</div>
+    <div class="preview-box" id="preview"></div>
+    <button class="copy-btn" id="copyBtn">Copy to clipboard</button>
+    <button class="generate-btn" id="generateBtn">✦ Generate Design System</button>
+    <div id="copyMsg"></div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var colours = [{ hex: '' }, { hex: '' }];
+  var constraints = [];
+  var loadedFonts = {};
+  var copyMsgTimer = null;
+
+  function v(id) {
+    var el = document.getElementById(id);
+    return el ? el.value.trim() : '';
+  }
+
+  function validHex(h) {
+    return /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test((h || '').trim());
+  }
+
+  // --- Theme ---
+  document.getElementById('themeBtn').addEventListener('click', function () {
+    var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    document.documentElement.setAttribute('data-theme', isDark ? '' : 'dark');
+    this.textContent = isDark ? '🌙 Dark' : '☀️ Light';
+  });
+
+  // --- Colours ---
+  function renderColours() {
+    var list = document.getElementById('colourList');
+    list.innerHTML = colours.map(function (c, i) {
+      return '<div class="colour-row">' +
+        '<div class="swatch" id="swatch' + i + '" style="background:' + (validHex(c.hex) ? c.hex : 'var(--border)') + '" data-idx="' + i + '"></div>' +
+        '<input type="color" id="picker' + i + '" style="display:none" value="' + (validHex(c.hex) ? c.hex : '#ffffff') + '">' +
+        '<input type="text" value="' + c.hex + '" placeholder="#000000" data-idx="' + i + '" class="hex-input">' +
+        (colours.length > 1 ? '<button class="remove-btn" data-idx="' + i + '">×</button>' : '') +
+        '</div>';
+    }).join('');
+
+    list.querySelectorAll('.swatch').forEach(function (el) {
+      el.addEventListener('click', function () {
+        document.getElementById('picker' + this.dataset.idx).click();
+      });
+    });
+    list.querySelectorAll('input[type="color"]').forEach(function (el) {
+      el.addEventListener('input', function () {
+        var i = parseInt(this.id.replace('picker', ''));
+        colours[i].hex = this.value;
+        renderColours();
+        update();
+      });
+    });
+    list.querySelectorAll('.hex-input').forEach(function (el) {
+      el.addEventListener('input', function () {
+        var i = parseInt(this.dataset.idx);
+        colours[i].hex = this.value;
+        var s = document.getElementById('swatch' + i);
+        if (s) s.style.background = validHex(this.value) ? this.value : 'var(--border)';
+        update();
+      });
+    });
+    list.querySelectorAll('.remove-btn').forEach(function (el) {
+      el.addEventListener('click', function () {
+        colours.splice(parseInt(this.dataset.idx), 1);
+        renderColours();
+        update();
+      });
+    });
+  }
+
+  document.getElementById('addColourBtn').addEventListener('click', function () {
+    colours.push({ hex: '' });
+    renderColours();
+    update();
+  });
+
+  document.getElementById('brandPreset').addEventListener('change', function () {
+    var val = this.value;
+    if (!val) return;
+    colours = val.split(',').map(function (h) { return { hex: h.trim() }; });
+    renderColours();
+    update();
+  });
+
+  // --- Constraints ---
+  function renderConstraints() {
+    var container = document.getElementById('constraintTags');
+    container.innerHTML = constraints.map(function (c, i) {
+      return '<span class="tag">' + c + '<button data-idx="' + i + '">×</button></span>';
+    }).join('');
+    container.querySelectorAll('button').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        constraints.splice(parseInt(this.dataset.idx), 1);
+        renderConstraints();
+        update();
+      });
+    });
+  }
+
+  function addConstraint() {
+    var inp = document.getElementById('constraintInput');
+    var val = inp.value.trim();
+    if (!val) return;
+    constraints.push(val);
+    inp.value = '';
+    renderConstraints();
+    update();
+  }
+
+  document.getElementById('addConstraintBtn').addEventListener('click', addConstraint);
+  document.getElementById('constraintInput').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') addConstraint();
+  });
+
+  // --- Font preview ---
+  function loadFont(family) {
+    if (!family || loadedFonts[family]) return;
+    loadedFonts[family] = true;
+    var style = document.createElement('style');
+    style.textContent = "@import url('https://fonts.googleapis.com/css2?family=" + encodeURIComponent(family) + ":wght@400;600;700&display=swap');";
+    document.head.appendChild(style);
+  }
+
+  function updateFontPreview() {
+    var hFont = v('fontHeading');
+    var bFont = v('fontBody');
+    var sample = v('sampleText');
+    var preview = document.getElementById('fontPreview');
+    var hEl = document.getElementById('previewHeadingText');
+    var bEl = document.getElementById('previewBodyText');
+
+    preview.style.opacity = '0.4';
+    loadFont(hFont);
+    loadFont(bFont);
+
+    setTimeout(function () {
+      hEl.style.fontFamily = hFont ? '"' + hFont + '", serif' : 'Georgia, serif';
+      bEl.style.fontFamily = bFont ? '"' + bFont + '", sans-serif' : 'system-ui, sans-serif';
+      hEl.textContent = sample ? (sample.length > 40 ? sample.slice(0, 40) + '…' : sample) : 'The quick brown fox';
+      preview.style.opacity = '1';
+    }, 600);
+  }
+
+  // --- Google Fonts ---
+  function setFontOptions(fonts) {
+    ['fontHeading', 'fontBody'].forEach(function (id) {
+      var sel = document.getElementById(id);
+      sel.innerHTML = '<option value="">Select a font</option>' +
+        fonts.map(function (f) { return '<option value="' + f + '">' + f + '</option>'; }).join('');
+      sel.addEventListener('change', function () { update(); updateFontPreview(); });
+    });
+    update();
+    updateFontPreview();
+  }
+
+  function loadGoogleFonts() {
+    var fallback = ['Inter','Roboto','Open Sans','Lato','Montserrat','Raleway','Playfair Display','Merriweather','Source Sans Pro','Nunito','Poppins','Oswald','Syne','DM Sans','Space Grotesk','Fraunces','Plus Jakarta Sans','Instrument Serif','Cormorant Garamond','Raleway'];
+    fetch('https://www.googleapis.com/webfonts/v1/webfonts?sort=popularity&key=REDACTED_ROTATE_IN_STEP_2')
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        var fonts = (data.items || []).slice(0, 200).map(function (f) { return f.family; });
+        setFontOptions(fonts.length ? fonts : fallback);
+      })
+      .catch(function () { setFontOptions(fallback); });
+  }
+
+  // --- Build prompt ---
+  function buildPrompt() {
+    var name = v('brandName') || '[Your brand name]';
+    var audience = v('audience') || '[describe your audience]';
+    var personality = v('personality') || '[describe brand personality]';
+    var colorMode = v('colorMode');
+    var hFont = v('fontHeading');
+    var bFont = v('fontBody');
+    var sample = v('sampleText');
+    var hexList = colours.map(function (c) { return c.hex; }).filter(validHex);
+    var colourStr = hexList.length ? hexList.join(', ') : '[list hex values]';
+    var fontStr = '';
+    if (hFont && bFont) fontStr = hFont + ' for headings, ' + bFont + ' for body';
+    else if (hFont) fontStr = hFont + ' for headings';
+    else if (bFont) fontStr = bFont + ' for body';
+    else fontStr = '[list fonts, or say "recommend something"]';
+    if (sample) fontStr += ' — ' + sample;
+    var allConstraints = ['No all-caps headings'].concat(constraints);
+
+    var about = v('aboutProject') || 'an online shop to sell original stickers online';
+    return "I'm building a design system for " + name + " — " + about + ".\n\n" +
+      "The audience is " + audience + ". The brand personality is " + personality + ".\n\n" +
+      "Brand colours: " + colourStr + "\n" +
+      "Fonts I want to use: " + fontStr + "\n\n" +
+      "Build me a design system foundation as a single HTML/CSS file that includes:\n" +
+      "- CSS custom properties for all tokens (colours, typography, spacing, grid, borders, shadows)\n" +
+      "- A type scale with display, heading, body, and mono styles\n" +
+      "- Button components (primary gradient, secondary outline)\n" +
+      "- Section label / eyebrow pattern\n" +
+      "- A responsive grid (max-width, gutters)\n" +
+      "- A sample hero section demonstrating the system\n" +
+      "- A sample card grid demonstrating the system\n\n" +
+      "Design constraints:\n" +
+      "- " + colorMode + "\n" +
+      allConstraints.map(function (c) { return "- " + c; }).join("\n") + "\n\n" +
+      "Build this as production-quality HTML/CSS. This is not a wireframe — it should look finished.";
+  }
+
+  function update() {
+    document.getElementById('preview').textContent = buildPrompt();
+  }
+
+  // --- Copy ---
+  function showCopyMsg(text, color) {
+    var msg = document.getElementById('copyMsg');
+    if (copyMsgTimer) clearTimeout(copyMsgTimer);
+    msg.textContent = text;
+    msg.style.cssText = 'font-size:0.78rem;margin-top:8px;text-align:center;min-height:1.2em;color:' + color + ';opacity:1;transition:opacity 0.3s;';
+    copyMsgTimer = setTimeout(function () {
+      msg.style.opacity = '0';
+      setTimeout(function () { msg.textContent = ''; }, 300);
+    }, 3000);
+  }
+
+  // --- Generate (sends prompt directly to Claude) ---
+  document.getElementById('generateBtn').addEventListener('click', function () {
+    var hasUserInput = v('brandName') || v('audience') || v('personality') || v('fontHeading') || v('fontBody') || v('sampleText') || colours.some(function (c) { return validHex(c.hex); }) || constraints.length > 0;
+    if (!hasUserInput) {
+      showCopyMsg('Fill in at least one field before generating.', '#e55');
+      return;
+    }
+    var prompt = buildPrompt();
+    if (typeof sendPrompt === 'function') {
+      sendPrompt(prompt);
+    } else {
+      showCopyMsg('sendPrompt not available — use Copy instead.', '#e55');
+    }
+  });
+
+  document.getElementById('copyBtn').addEventListener('click', function () {
+    var content = document.getElementById('preview').textContent.trim();
+    var defaultContent = buildPrompt().replace(/\[.*?\]/g, '').trim();
+    var hasUserInput = v('brandName') || v('audience') || v('personality') || v('fontHeading') || v('fontBody') || v('sampleText') || colours.some(function (c) { return validHex(c.hex); }) || constraints.length > 0;
+
+    if (!hasUserInput) {
+      showCopyMsg('Nothing to copy — fill in at least one field first.', '#e55');
+      return;
+    }
+
+    var ta = document.createElement('textarea');
+    ta.value = content;
+    ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0;';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    var ok = document.execCommand('copy');
+    document.body.removeChild(ta);
+
+    if (ok) {
+      var btn = this;
+      btn.classList.add('copied');
+      showCopyMsg('Copied to clipboard.', '#2d8a4e');
+      var toast = document.getElementById('toast');
+      toast.classList.add('show');
+      setTimeout(function () {
+        btn.classList.remove('copied');
+        toast.classList.remove('show');
+      }, 3000);
+    } else {
+      showCopyMsg('Copy failed — please try again.', '#e55');
+    }
+  });
+
+  // --- Randomise ---
+  var PRESETS = [
+    { name:'Lumino Kids', about:'A joyful toy shop for curious kids and the parents who love shopping for them', audience:'Children aged 4–10 and their parents, looking for fun and educational toys', personality:'Playful, warm and encouraging — like a favourite teacher, never loud or overwhelming', colours:['#FFD93D','#6BCB77','#4D96FF','#FF6B6B'], heading:'Nunito', body:'Open Sans', constraints:['Rounded corners only — minimum 16px radius','No dark backgrounds in light mode','Always pair icons with labels'] },
+    { name:'Vault & Co.', about:'A boutique wealth management platform built for discerning investors who expect more', audience:'High-net-worth individuals and financial professionals aged 35–60', personality:'Authoritative and precise — premium but never cold, confident without being showy', colours:['#1B1F2A','#C9A84C','#F5F2EC','#6B7280'], heading:'Playfair Display', body:'Inter', constraints:['No gradients — flat colour only','Borders at 1px, 0.1 opacity','Generous whitespace — minimum 48px section padding'] },
+    { name:'NeonByte', about:'An indie game publishing label and community hub for developers who make weird, wonderful things', audience:'Indie game developers, streamers and tech-savvy Gen Z creatives', personality:'Bold, irreverent and fast-paced — a bit chaotic but in a deliberate way, like a well-designed zine', colours:['#0D0D0D','#00FFC2','#FF2D78','#F5F5F5'], heading:'Space Grotesk', body:'DM Sans', constraints:['Dark mode default','Accent colours used sparingly — max one per section','No soft shadows — hard drop shadows only'] },
+    { name:'Bloom Wellness', about:'A self-care subscription brand delivering rituals, remedies and mindful products to your door', audience:'Women aged 25–45 interested in mindfulness, natural health and self-care rituals', personality:'Calm, nurturing and grounded — feels like a slow Sunday morning, soft without being naive', colours:['#F9F4EF','#C9A48B','#7A9E7E','#3D3535'], heading:'Fraunces', body:'Lato', constraints:['No hard edges — border radius minimum 8px','Muted tones only — no saturated accent colours','Line heights generous — body text minimum 1.8'] },
+    { name:'ShiftWork', about:'A productivity platform that helps distributed teams run faster with less friction', audience:'Startup founders, product managers and remote teams who need to move fast', personality:'No-nonsense and efficient — sharp and modern, like a great productivity app, zero fluff', colours:['#111827','#2563EB','#F3F4F6','#10B981'], heading:'Syne', body:'Inter', constraints:['Compact spacing — base unit 4px','Functional colour use only — no decorative gradients','Accessible contrast minimum AA on all text'] },
+    { name:'Petal & Press', about:'An artisan floral studio offering seasonal arrangements, workshops and pressed flower stationery', audience:'Independent florists, wedding planners and lifestyle bloggers who value craft and aesthetics', personality:'Romantic but editorial — like a high-end print magazine meets a local artisan studio', colours:['#FAF7F2','#D4A5A5','#8B6F6F','#2C2C2C'], heading:'Cormorant Garamond', body:'Raleway', constraints:['Italic headings encouraged','No all-caps anywhere','Thin borders — 1px max, always muted'] },
+    { name:'Forgehaus', about:'A trade supply marketplace connecting contractors and DIYers with professional-grade tools and materials', audience:'Tradespeople, contractors and DIY enthusiasts who need reliable, practical tools', personality:'Rugged and dependable — built to last, straight-talking, never tries too hard', colours:['#1C1C1C','#E8A020','#F5F0E8','#4A4A4A'], heading:'Oswald', body:'Source Sans Pro', constraints:['High contrast always','Minimum touch target 48px','Bold over italic — no decorative type treatments'] }
+  ];
+
+  document.getElementById('randomiseBtn').addEventListener('click', function () {
+    var p = PRESETS[Math.floor(Math.random() * PRESETS.length)];
+    document.getElementById('brandName').value = p.name;
+    document.getElementById('aboutProject').value = p.about;
+    document.getElementById('audience').value = p.audience;
+    document.getElementById('personality').value = p.personality;
+    colours = p.colours.map(function (h) { return { hex: h }; });
+    renderColours();
+    var setFont = function (id, val) {
+      var sel = document.getElementById(id);
+      for (var i = 0; i < sel.options.length; i++) {
+        if (sel.options[i].value === val) { sel.value = val; break; }
+      }
+    };
+    setFont('fontHeading', p.heading);
+    setFont('fontBody', p.body);
+    document.getElementById('sampleText').value = '';
+    constraints = p.constraints.slice();
+    renderConstraints();
+    update();
+    updateFontPreview();
+  });
+
+  // --- Input listeners ---
+  ['brandName','audience','personality','colorMode','aboutProject'].forEach(function (id) {
+    document.getElementById(id).addEventListener(id === 'colorMode' ? 'change' : 'input', update);
+  });
+  document.getElementById('sampleText').addEventListener('input', function () { update(); updateFontPreview(); });
+
+  // --- Init ---
+  renderColours();
+  renderConstraints();
+  loadGoogleFonts();
+  update();
+  updateFontPreview();
+})();
+</script>
+</body>
+</html>
