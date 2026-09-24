@@ -467,15 +467,38 @@
     updateFontPreview();
   }
 
+  // Curated list of popular Google Fonts families. No API key is needed to list or
+  // load these — actual font rendering already goes through the keyless CSS2 endpoint
+  // in loadFont() above (fonts.googleapis.com/css2?family=...), so a live, authenticated
+  // catalog lookup was never required for this tool's purposes.
+  var GOOGLE_FONTS = [
+    // Sans-serif
+    'Inter','Roboto','Open Sans','Lato','Montserrat','Raleway','Nunito','Poppins','Work Sans',
+    'Rubik','Mulish','Karla','Manrope','DM Sans','Plus Jakarta Sans','Space Grotesk','Sora',
+    'Outfit','Urbanist','Figtree','Jost','Epilogue','Public Sans','Barlow','Hind','Cabin',
+    'Heebo','Quicksand','Comfortaa','Josefin Sans','Archivo','Titillium Web','PT Sans',
+    'Roboto Condensed','Source Sans Pro','Noto Sans','IBM Plex Sans','Assistant','Overpass',
+    'Varela Round','Maven Pro','Exo 2','Saira','Red Hat Display','Lexend','Bricolage Grotesque',
+    'Albert Sans','Onest','Geist',
+    // Serif
+    'Merriweather','Playfair Display','Lora','PT Serif','Source Serif Pro','Noto Serif',
+    'Crimson Text','Cormorant Garamond','Libre Baskerville','EB Garamond','Bitter','Vollkorn',
+    'Domine','Spectral','Zilla Slab','Alegreya','Cardo','Rokkitt','Fraunces','Instrument Serif',
+    'Newsreader','Frank Ruhl Libre','Literata','Bodoni Moda','Petrona',
+    // Display
+    'Oswald','Bebas Neue','Anton','Abril Fatface','Pacifico','Righteous','Syne','Unbounded',
+    'Fjalla One','Passion One','Alfa Slab One','Staatliches','Big Shoulders Display',
+    'Archivo Black','Baloo 2',
+    // Handwriting / script
+    'Dancing Script','Caveat','Shadows Into Light','Satisfy','Great Vibes','Kalam',
+    'Indie Flower','Sacramento','Amatic SC','Permanent Marker',
+    // Monospace
+    'Roboto Mono','Source Code Pro','JetBrains Mono','IBM Plex Mono','Space Mono',
+    'Inconsolata','Fira Code','DM Mono','Courier Prime'
+  ];
+
   function loadGoogleFonts() {
-    var fallback = ['Inter','Roboto','Open Sans','Lato','Montserrat','Raleway','Playfair Display','Merriweather','Source Sans Pro','Nunito','Poppins','Oswald','Syne','DM Sans','Space Grotesk','Fraunces','Plus Jakarta Sans','Instrument Serif','Cormorant Garamond','Raleway'];
-    fetch('https://www.googleapis.com/webfonts/v1/webfonts?sort=popularity&key=REDACTED_ROTATE_IN_STEP_2')
-      .then(function (r) { return r.json(); })
-      .then(function (data) {
-        var fonts = (data.items || []).slice(0, 200).map(function (f) { return f.family; });
-        setFontOptions(fonts.length ? fonts : fallback);
-      })
-      .catch(function () { setFontOptions(fallback); });
+    setFontOptions(GOOGLE_FONTS);
   }
 
   // --- Build prompt ---
